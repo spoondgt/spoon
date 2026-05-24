@@ -1,0 +1,991 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.app{display:flex;min-height:100vh;background:var(--color-background-tertiary);position:relative}
+
+.sidebar{width:200px;min-width:200px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;padding:0}
+.sb-logo{padding:16px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sb-logo-txt{font-size:14px;font-weight:500;color:var(--color-text-primary);display:flex;align-items:center;gap:6px}
+.sb-logo-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:1px}
+.sb-section{padding:12px 8px 4px}
+.sb-section-label{font-size:10px;color:var(--color-text-tertiary);font-weight:500;padding:0 8px;margin-bottom:4px;letter-spacing:.4px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;color:var(--color-text-secondary);transition:background .12s;position:relative}
+.sb-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.sb-item:hover .sb-delete{display:flex}
+.sb-item.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+.sb-item i{font-size:15px;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--color-background-danger);color:var(--color-text-danger);font-size:10px;padding:1px 5px;border-radius:99px;font-weight:500}
+.sb-brand-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sb-item-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-delete{display:none;width:18px;height:18px;align-items:center;justify-content:center;border-radius:4px;color:var(--color-text-tertiary)}
+.sb-delete:hover{background:var(--color-background-danger);color:var(--color-text-danger)}
+.sb-add{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:var(--color-text-tertiary);margin-top:2px}
+.sb-add:hover{color:var(--color-text-secondary);background:var(--color-background-secondary)}
+
+.main{flex:1;overflow-y:auto;min-width:0}
+.page{display:none;padding:20px}
+.page.active{display:block}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.page-sub{font-size:13px;color:var(--color-text-secondary);margin-top:2px}
+
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer;font-family:var(--font-sans);white-space:nowrap}
+.btn:hover{background:var(--color-background-secondary)}
+.btn-primary{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.btn-primary:hover{opacity:.88}
+.btn-success{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.btn-danger{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.stat-l{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.stat-v{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px}
+.card+.card{margin-top:12px}
+
+.content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.content-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;cursor:pointer;transition:border-color .15s}
+.content-card:hover{border-color:var(--color-border-secondary)}
+.cc-thumb{height:120px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cc-thumb img,.cc-thumb video{width:100%;height:100%;object-fit:cover}
+.cc-thumb-icon{font-size:32px;color:var(--color-text-tertiary)}
+.cc-channel-tag{position:absolute;top:8px;left:8px;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;z-index:2}
+.cc-status-tag{position:absolute;top:8px;right:8px;font-size:10px;padding:2px 7px;border-radius:99px;z-index:2}
+.cc-count-badge{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 7px;border-radius:99px;display:flex;align-items:center;gap:3px;z-index:2}
+.cc-video-badge{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;display:flex;align-items:center;gap:3px;z-index:2}
+.tag-review{background:#FAEEDA;color:#633806}
+.tag-approved{background:#EAF3DE;color:#27500A}
+.tag-rejected{background:#FCEBEB;color:#791F1F}
+.tag-draft{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.cc-body{padding:10px}
+.cc-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-meta{font-size:11px;color:var(--color-text-secondary)}
+.cc-date{font-size:11px;color:var(--color-text-tertiary);margin-top:4px}
+
+.brand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.brand-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;cursor:pointer;transition:border-color .15s;position:relative}
+.brand-card:hover{border-color:var(--color-border-secondary)}
+.brand-card:hover .bc-del{display:flex}
+.bc-del{display:none;position:absolute;top:10px;right:10px;width:24px;height:24px;align-items:center;justify-content:center;border-radius:6px;background:var(--color-background-secondary);color:var(--color-text-tertiary);cursor:pointer;font-size:14px}
+.bc-del:hover{background:var(--color-background-danger);color:var(--color-text-danger)}
+.brand-card-dot{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;margin-bottom:10px}
+.brand-card-name{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.brand-card-meta{font-size:12px;color:var(--color-text-secondary)}
+.brand-card-channels{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.bcc-pill{font-size:10px;padding:2px 6px;border-radius:99px;background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.brand-card-stats{display:flex;gap:10px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--color-border-tertiary)}
+.bcs{font-size:11px;color:var(--color-text-secondary);text-align:center;flex:1}
+.bcs-v{font-size:15px;font-weight:500;color:var(--color-text-primary);display:block}
+
+.pill{font-size:11px;padding:3px 9px;border-radius:99px}
+
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;display:block;font-weight:500}
+input,select,textarea{width:100%;font-family:var(--font-sans);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px 10px}
+textarea{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:14px 0}
+
+.detail-wrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px}
+.detail-preview-area{display:flex;flex-direction:column;gap:8px}
+.detail-main-preview{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:0.5px solid var(--color-border-tertiary);overflow:hidden;position:relative}
+.detail-main-preview img,.detail-main-preview video{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:#000}
+.detail-main-preview .placeholder-content{display:flex;flex-direction:column;align-items:center;gap:8px}
+.detail-main-preview .placeholder-content i{font-size:48px;color:var(--color-text-tertiary)}
+.detail-main-preview-counter{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:3px 9px;border-radius:99px;z-index:2}
+.detail-main-preview-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:2}
+.detail-main-preview-nav:hover{background:rgba(0,0,0,.75)}
+.detail-main-preview-nav.prev{left:10px}
+.detail-main-preview-nav.next{right:10px}
+.detail-preview-label{font-size:12px;color:var(--color-text-secondary)}
+.detail-thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.detail-thumb{width:60px;height:60px;border-radius:var(--border-radius-md);overflow:hidden;flex-shrink:0;cursor:pointer;border:2px solid transparent;background:var(--color-background-secondary);position:relative}
+.detail-thumb.active{border-color:var(--color-text-primary)}
+.detail-thumb img,.detail-thumb video{width:100%;height:100%;object-fit:cover}
+.detail-thumb-vid-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+.comment-list{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;margin-bottom:10px}
+.comment-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:9px 11px}
+.comment-author{font-size:11px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.comment-txt{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.comment-time{font-size:10px;color:var(--color-text-tertiary);margin-top:3px}
+
+.action-bar{display:flex;gap:8px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary)}
+
+.all-content-table{width:100%;border-collapse:collapse}
+.all-content-table th{font-size:11px;color:var(--color-text-secondary);font-weight:500;text-align:left;padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.all-content-table td{font-size:13px;color:var(--color-text-primary);padding:10px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle}
+.all-content-table tr:last-child td{border-bottom:none}
+.all-content-table tr:hover td{background:var(--color-background-secondary)}
+
+.modal-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:60px 20px 40px;min-height:100vh;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#ffffff;border-radius:var(--border-radius-lg);width:520px;max-width:95%;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:500;color:#1a1a1a}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:transparent;border:none;cursor:pointer;color:#666;font-size:16px}
+.modal-close:hover{background:#f5f5f5}
+.modal .form-label{color:#444}
+.modal input,.modal select,.modal textarea{background:#fff;border:0.5px solid #d4d4d4;color:#1a1a1a}
+.modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:#1a1a1a}
+
+.channel-checks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ch-check{display:flex;align-items:center;gap:6px;padding:8px 10px;border:0.5px solid #d4d4d4;border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:#444;background:#fff;transition:all .12s;user-select:none}
+.ch-check:hover{border-color:#999}
+.ch-check.selected{border-color:#1a1a1a;background:#1a1a1a;color:#fff}
+.ch-check i{font-size:14px}
+
+.brand-color-picker{display:flex;gap:6px;flex-wrap:wrap}
+.bcp{width:26px;height:26px;border-radius:6px;cursor:pointer;border:2px solid transparent;position:relative}
+.bcp.selected{border-color:#1a1a1a}
+.bcp.selected::after{content:'';position:absolute;inset:2px;border:2px solid #fff;border-radius:4px}
+
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:0.5px solid #e5e5e5}
+.modal-btn{padding:8px 16px;border-radius:var(--border-radius-md);font-size:13px;cursor:pointer;font-family:var(--font-sans);border:0.5px solid #d4d4d4;background:#fff;color:#1a1a1a}
+.modal-btn:hover{background:#f5f5f5}
+.modal-btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.modal-btn-primary:hover{opacity:.88}
+.modal-btn-danger{background:#a32d2d;color:#fff;border-color:#a32d2d}
+.modal-btn-danger:hover{opacity:.88}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;color:var(--color-text-tertiary);gap:8px}
+.empty-state i{font-size:36px}
+.empty-state p{font-size:13px}
+.empty-state button{margin-top:8px}
+
+.channel-pill{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500}
+
+.dropzone{border:1.5px dashed #d4d4d4;border-radius:var(--border-radius-lg);padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:#fafafa;color:#666}
+.dropzone:hover,.dropzone.dragover{border-color:#1a1a1a;background:#f5f5f5;color:#1a1a1a}
+.dropzone i{font-size:28px;display:block;margin-bottom:6px}
+.dropzone-title{font-size:13px;font-weight:500;margin-bottom:3px;color:#1a1a1a}
+.dropzone-sub{font-size:11px;color:#888}
+
+.upload-summary{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:8px 10px;background:#fafafa;border-radius:var(--border-radius-md);font-size:11px;color:#666;border:0.5px solid #e5e5e5}
+.upload-summary-bar{height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden;margin-top:6px}
+.upload-summary-fill{height:100%;background:#1a1a1a;transition:width .3s}
+.upload-summary-fill.warn{background:#854F0B}
+.upload-summary-fill.danger{background:#a32d2d}
+
+.file-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.file-item{position:relative;border-radius:var(--border-radius-md);overflow:hidden;border:0.5px solid #d4d4d4;background:#000;aspect-ratio:1}
+.file-item img,.file-item video{width:100%;height:100%;object-fit:cover;display:block}
+.file-item-info{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:14px 6px 5px;color:#fff;font-size:10px;display:flex;align-items:center;gap:4px}
+.file-item-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-item-remove{position:absolute;top:5px;right:5px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;color:#fff;background:rgba(0,0,0,.6);border:none;font-size:12px}
+.file-item-remove:hover{background:#a32d2d}
+.file-item-type{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;display:flex;align-items:center;gap:2px}
+.add-more-tile{background:#fafafa;border:1.5px dashed #d4d4d4;border-radius:var(--border-radius-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#666;font-size:11px;gap:3px;aspect-ratio:1;transition:all .12s}
+.add-more-tile:hover{border-color:#1a1a1a;background:#f5f5f5;color:#1a1a1a}
+.add-more-tile i{font-size:22px}
+</style>
+
+<div class="app">
+
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-txt"><i class="ti ti-tools-kitchen-2" aria-hidden="true"></i> SPOON</div>
+    <div class="sb-logo-sub">SNS 콘텐츠 컨펌 플랫폼</div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">메뉴</div>
+    <div class="sb-item active" id="nav-dashboard" onclick="goPage('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드</div>
+    <div class="sb-item" id="nav-brands" onclick="goPage('brands')"><i class="ti ti-building"></i> 브랜드 관리</div>
+    <div class="sb-item" id="nav-all" onclick="goPage('all')">
+      <i class="ti ti-files"></i> 전체 콘텐츠
+      <span class="sb-badge" id="badge-review">0</span>
+    </div>
+  </div>
+
+  <div class="sb-section" style="flex:1">
+    <div class="sb-section-label">브랜드</div>
+    <div id="sidebar-brands"></div>
+    <div class="sb-add" onclick="openBrandModal()"><i class="ti ti-plus"></i> 브랜드 추가</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div><div class="page-title">대시보드</div><div class="page-sub" id="dash-date"></div></div>
+      <button class="btn btn-primary" onclick="goPage('all')"><i class="ti ti-eye"></i> 전체 콘텐츠 보기</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-l">전체 브랜드</div><div class="stat-v" id="st-brands">0</div></div>
+      <div class="stat"><div class="stat-l">전체 콘텐츠</div><div class="stat-v" id="st-total">0</div></div>
+      <div class="stat"><div class="stat-l">컨펌 대기</div><div class="stat-v" id="st-review" style="color:var(--color-text-warning)">0</div></div>
+      <div class="stat"><div class="stat-l">승인 완료</div><div class="stat-v" id="st-approved" style="color:var(--color-text-success)">0</div></div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px">컨펌 대기 콘텐츠</div>
+      <div id="dash-pending"></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:10px">브랜드별 현황</div>
+      <div class="brand-grid" id="dash-brands"></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-brands">
+    <div class="page-header">
+      <div><div class="page-title">브랜드 관리</div></div>
+      <button class="btn btn-primary" onclick="openBrandModal()"><i class="ti ti-plus"></i> 새 브랜드 추가</button>
+    </div>
+    <div class="brand-grid" id="brands-grid"></div>
+  </div>
+
+  <div class="page" id="page-all">
+    <div class="page-header">
+      <div><div class="page-title">전체 콘텐츠</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="filter-brand" onchange="renderAll()" style="width:auto;font-size:12px;padding:5px 8px">
+          <option value="">전체 브랜드</option>
+        </select>
+        <select id="filter-status" onchange="renderAll()" style="width:auto;font-size:12px;padding:5px 8px">
+          <option value="">전체 상태</option>
+          <option value="review">컨펌 대기</option>
+          <option value="approved">승인</option>
+          <option value="rejected">반려</option>
+          <option value="draft">초안</option>
+        </select>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table class="all-content-table">
+        <thead><tr>
+          <th>브랜드</th><th>제목</th><th>채널</th><th>업로드 예정일</th><th>상태</th><th>액션</th>
+        </tr></thead>
+        <tbody id="all-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page" id="page-brand-detail">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-sm" onclick="goPage('brands')"><i class="ti ti-arrow-left"></i></button>
+        <div>
+          <div class="page-title" id="brand-detail-name">브랜드명</div>
+          <div class="page-sub" id="brand-detail-sub"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openUploadModal()"><i class="ti ti-upload"></i> 콘텐츠 업로드</button>
+    </div>
+    <div class="content-grid" id="brand-content-grid"></div>
+  </div>
+
+  <div class="page" id="page-content-detail">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-sm" id="content-back-btn" onclick="backFromContent()"><i class="ti ti-arrow-left"></i></button>
+        <div>
+          <div class="page-title" id="content-detail-title">콘텐츠 제목</div>
+          <div class="page-sub" id="content-detail-brand"></div>
+        </div>
+      </div>
+      <div id="content-status-area"></div>
+    </div>
+    <div class="detail-wrap">
+      <div>
+        <div class="detail-preview-area">
+          <div class="detail-main-preview" id="content-preview">
+            <div class="placeholder-content">
+              <i class="ti ti-photo" aria-hidden="true"></i>
+              <span class="detail-preview-label">콘텐츠 미리보기</span>
+            </div>
+          </div>
+          <div id="content-thumbs"></div>
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px">캡션</div>
+        <div id="content-caption" style="font-size:13px;color:var(--color-text-primary);line-height:1.6;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px"></div>
+        <div class="divider"></div>
+        <div style="display:flex;gap:20px;font-size:12px;flex-wrap:wrap">
+          <div><span style="color:var(--color-text-secondary)">채널</span> <span id="content-channel" style="color:var(--color-text-primary);font-weight:500;margin-left:6px"></span></div>
+          <div><span style="color:var(--color-text-secondary)">예정일</span> <span id="content-date" style="color:var(--color-text-primary);font-weight:500;margin-left:6px"></span></div>
+          <div><span style="color:var(--color-text-secondary)">파일</span> <span id="content-file-count" style="color:var(--color-text-primary);font-weight:500;margin-left:6px"></span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:10px">컨펌 & 코멘트</div>
+        <div class="comment-list" id="comment-list"></div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <input type="text" id="comment-input" placeholder="코멘트 입력..." style="flex:1;font-size:12px;padding:6px 9px">
+          <button class="btn btn-sm" onclick="addComment()"><i class="ti ti-send"></i></button>
+        </div>
+        <div class="action-bar" id="action-bar"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modal-brand">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-building-plus" aria-hidden="true"></i> 새 브랜드 추가</div>
+      <button class="modal-close" onclick="closeBrandModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">브랜드명 <span style="color:#a32d2d">*</span></label>
+      <input type="text" id="new-brand-name" placeholder="예: 스타벅스 코리아">
+    </div>
+    <div class="form-group">
+      <label class="form-label">담당자명 <span style="color:#a32d2d">*</span></label>
+      <input type="text" id="new-brand-manager" placeholder="예: 김민준">
+    </div>
+    <div class="form-group">
+      <label class="form-label">SNS 채널 (복수 선택 가능)</label>
+      <div class="channel-checks" id="channel-checks"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">브랜드 색상</label>
+      <div class="brand-color-picker" id="color-picker"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeBrandModal()">취소</button>
+      <button class="modal-btn modal-btn-primary" onclick="createBrand()">브랜드 추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <div class="modal-title" style="color:#a32d2d"><i class="ti ti-alert-triangle" aria-hidden="true"></i> 브랜드 삭제</div>
+      <button class="modal-close" onclick="closeDeleteModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <p style="font-size:13px;color:#444;line-height:1.6;margin-bottom:8px"><span id="del-brand-name" style="font-weight:500;color:#1a1a1a"></span> 브랜드를 정말 삭제하시겠습니까?</p>
+    <p style="font-size:12px;color:#888">이 브랜드에 속한 <span id="del-content-count">0</span>개의 콘텐츠도 함께 삭제되며, 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeDeleteModal()">취소</button>
+      <button class="modal-btn modal-btn-danger" onclick="confirmDeleteBrand()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-upload" aria-hidden="true"></i> 콘텐츠 업로드</div>
+      <button class="modal-close" onclick="closeUploadModal()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">파일 첨부 (여러 개 선택 가능)</label>
+      <input type="file" id="up-file-input" accept="image/*,video/*" multiple style="display:none" onchange="handleFileInput(event)">
+      <div id="dropzone" class="dropzone" onclick="document.getElementById('up-file-input').click()">
+        <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+        <div class="dropzone-title">클릭하거나 파일을 드래그해서 업로드</div>
+        <div class="dropzone-sub">이미지·영상 다중 선택 가능 · 총 용량 최대 1GB</div>
+      </div>
+      <div id="file-summary" style="display:none"></div>
+      <div id="file-list-area"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">콘텐츠 제목 <span style="color:#a32d2d">*</span></label>
+      <input type="text" id="up-title" placeholder="콘텐츠 제목을 입력하세요">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">채널</label>
+        <select id="up-channel"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">업로드 예정일</label>
+        <input type="date" id="up-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">캡션 / 본문</label>
+      <textarea id="up-caption" placeholder="캡션 또는 본문 텍스트를 입력하세요..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">상태</label>
+      <select id="up-status">
+        <option value="review">컨펌 요청</option><option value="draft">초안 저장</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeUploadModal()">취소</button>
+      <button class="modal-btn modal-btn-primary" onclick="uploadContent()">업로드</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const COLORS=['#534AB7','#0F6E56','#993C1D','#993556','#185FA5','#3B6D11','#854F0B','#A32D2D','#444441'];
+const COLOR_BG=['#EEEDFE','#E1F5EE','#FAECE7','#FBEAF0','#E6F1FB','#EAF3DE','#FAEEDA','#FCEBEB','#F1EFE8'];
+const MAX_TOTAL_SIZE=1024*1024*1024;
+
+const CHANNELS=[
+  {id:'instagram',name:'인스타그램',icon:'ti-brand-instagram',color:'#8b1a5f',bg:'#f5e6f5'},
+  {id:'youtube',name:'유튜브',icon:'ti-brand-youtube',color:'#8b1a1a',bg:'#f5e6e6'},
+  {id:'facebook',name:'페이스북',icon:'ti-brand-facebook',color:'#1a3a8b',bg:'#e6eef5'},
+  {id:'x',name:'X',icon:'ti-brand-x',color:'#2c2c2a',bg:'#e6e6e6'},
+  {id:'twitter',name:'트위터',icon:'ti-brand-twitter',color:'#1a8bd8',bg:'#e6f0f5'},
+  {id:'tiktok',name:'틱톡',icon:'ti-brand-tiktok',color:'#1a5f5f',bg:'#e6f5f5'},
+];
+
+let brands=[];
+let contents=[];
+let currentBrandId=null;
+let currentContentId=null;
+let contentBackPage='brands';
+let selectedColor=0;
+let selectedChannels=[];
+let pendingDeleteBrandId=null;
+let uploadedFiles=[];
+let previewIndex=0;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function getChannel(id){return CHANNELS.find(c=>c.id===id);}
+
+function statusLabel(s){
+  const m={review:['tag-review','컨펌 대기'],approved:['tag-approved','승인'],rejected:['tag-rejected','반려'],draft:['tag-draft','초안']};
+  return m[s]||['tag-draft',s];
+}
+
+function formatFileSize(bytes){
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  if(bytes<1024*1024*1024) return (bytes/1024/1024).toFixed(1)+' MB';
+  return (bytes/1024/1024/1024).toFixed(2)+' GB';
+}
+
+function totalUploadedSize(){return uploadedFiles.reduce((s,f)=>s+f.size,0);}
+
+function goPage(p,brandId){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const nav=document.getElementById('nav-'+p);
+  if(nav) nav.classList.add('active');
+
+  if(p==='dashboard') renderDashboard();
+  if(p==='brands') renderBrandsPage();
+  if(p==='all') renderAll();
+  if(p==='brand-detail' && brandId){currentBrandId=brandId;renderBrandDetail(brandId);}
+}
+
+function renderSidebar(){
+  const sb=document.getElementById('sidebar-brands');
+  if(!brands.length){
+    sb.innerHTML='<div style="font-size:11px;color:var(--color-text-tertiary);padding:6px 8px">아직 브랜드가 없습니다</div>';
+  } else {
+    sb.innerHTML=brands.map(b=>`
+      <div class="sb-item" onclick="goPage('brand-detail','${b.id}')">
+        <span class="sb-brand-dot" style="background:${COLORS[b.colorIdx]}"></span>
+        <span class="sb-item-name">${b.name}</span>
+        <span class="sb-delete" onclick="event.stopPropagation();openDeleteModal('${b.id}')" title="브랜드 삭제"><i class="ti ti-trash" style="font-size:13px"></i></span>
+      </div>`).join('');
+  }
+  const reviewCount=contents.filter(c=>c.status==='review').length;
+  document.getElementById('badge-review').textContent=reviewCount||'';
+  document.getElementById('badge-review').style.display=reviewCount?'':'none';
+
+  const filterBrand=document.getElementById('filter-brand');
+  filterBrand.innerHTML='<option value="">전체 브랜드</option>'+brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+function getCoverFile(c){
+  if(c.files&&c.files.length){
+    const img=c.files.find(f=>f.type&&f.type.startsWith('image/'));
+    return img||c.files[0];
+  }
+  return null;
+}
+
+function renderThumb(c){
+  const cover=getCoverFile(c);
+  if(cover){
+    const isVid=cover.type&&cover.type.startsWith('video/');
+    const fileCount=c.files.length;
+    const countBadge=fileCount>1?`<span class="cc-count-badge"><i class="ti ti-stack-2" style="font-size:10px"></i> ${fileCount}</span>`:'';
+    const vidBadge=isVid?`<span class="cc-video-badge"><i class="ti ti-player-play" style="font-size:9px"></i> 영상</span>`:'';
+    const media=isVid?`<video src="${cover.dataUrl}" muted></video>`:`<img src="${cover.dataUrl}" alt="">`;
+    return media+vidBadge+countBadge;
+  }
+  return `<i class="ti ti-photo cc-thumb-icon" aria-hidden="true"></i>`;
+}
+
+function renderDashboard(){
+  const today=new Date();
+  document.getElementById('dash-date').textContent=today.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  document.getElementById('st-brands').textContent=brands.length;
+  document.getElementById('st-total').textContent=contents.length;
+  document.getElementById('st-review').textContent=contents.filter(c=>c.status==='review').length;
+  document.getElementById('st-approved').textContent=contents.filter(c=>c.status==='approved').length;
+
+  const pending=contents.filter(c=>c.status==='review');
+  const dp=document.getElementById('dash-pending');
+  if(!pending.length){
+    dp.innerHTML='<div class="empty-state" style="padding:20px"><i class="ti ti-circle-check"></i><p>대기 중인 콘텐츠가 없습니다.</p></div>';
+  } else {
+    dp.innerHTML='<table class="all-content-table"><thead><tr><th>브랜드</th><th>콘텐츠</th><th>채널</th><th>예정일</th><th>액션</th></tr></thead><tbody>'+
+    pending.map(c=>{
+      const b=brands.find(x=>x.id===c.brandId);
+      const ch=getChannel(c.channel);
+      return `<tr style="cursor:pointer" onclick="openContent('${c.id}','dashboard')">
+        <td><span style="background:${COLOR_BG[b?.colorIdx||0]};color:${COLORS[b?.colorIdx||0]};font-size:11px;padding:2px 8px;border-radius:99px">${b?.name||'-'}</span></td>
+        <td style="font-weight:500">${c.title}</td>
+        <td><span class="channel-pill" style="background:${ch?.bg||'#eee'};color:${ch?.color||'#333'}"><i class="ti ${ch?.icon||'ti-file'}" style="font-size:11px;vertical-align:-1px" aria-hidden="true"></i> ${ch?.name||c.channel}</span></td>
+        <td style="color:var(--color-text-secondary)">${c.date}</td>
+        <td><button class="btn btn-sm btn-success" onclick="event.stopPropagation();quickApprove('${c.id}')"><i class="ti ti-check"></i> 승인</button></td>
+      </tr>`;
+    }).join('')+'</tbody></table>';
+  }
+
+  const db=document.getElementById('dash-brands');
+  if(!brands.length){
+    db.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-building"></i><p>아직 등록된 브랜드가 없습니다</p><button class="btn btn-primary btn-sm" onclick="openBrandModal()"><i class="ti ti-plus"></i> 첫 브랜드 추가하기</button></div>`;
+  } else {
+    db.innerHTML=brands.map(b=>renderBrandCard(b)).join('');
+  }
+}
+
+function renderBrandCard(b){
+  const bc=contents.filter(c=>c.brandId===b.id);
+  const rv=bc.filter(c=>c.status==='review').length;
+  const ap=bc.filter(c=>c.status==='approved').length;
+  const chPills=(b.channels||[]).map(cid=>{
+    const ch=getChannel(cid);
+    return ch?`<span class="bcc-pill" style="background:${ch.bg};color:${ch.color}"><i class="ti ${ch.icon}" style="font-size:10px;vertical-align:-1px" aria-hidden="true"></i> ${ch.name}</span>`:'';
+  }).join('');
+  return `<div class="brand-card" onclick="goPage('brand-detail','${b.id}')">
+    <span class="bc-del" onclick="event.stopPropagation();openDeleteModal('${b.id}')" title="삭제"><i class="ti ti-trash" aria-hidden="true"></i></span>
+    <div class="brand-card-dot" style="background:${COLOR_BG[b.colorIdx]};color:${COLORS[b.colorIdx]}">${b.name[0]}</div>
+    <div class="brand-card-name">${b.name}</div>
+    <div class="brand-card-meta">${b.manager?b.manager+' 담당':''}</div>
+    ${chPills?`<div class="brand-card-channels">${chPills}</div>`:''}
+    <div class="brand-card-stats">
+      <div class="bcs"><span class="bcs-v">${bc.length}</span>전체</div>
+      <div class="bcs"><span class="bcs-v" style="color:var(--color-text-warning)">${rv}</span>대기</div>
+      <div class="bcs"><span class="bcs-v" style="color:var(--color-text-success)">${ap}</span>승인</div>
+    </div>
+  </div>`;
+}
+
+function renderBrandsPage(){
+  const grid=document.getElementById('brands-grid');
+  if(!brands.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-building"></i><p>아직 등록된 브랜드가 없습니다</p><button class="btn btn-primary btn-sm" onclick="openBrandModal()"><i class="ti ti-plus"></i> 첫 브랜드 추가하기</button></div>`;
+  } else {
+    grid.innerHTML=brands.map(b=>renderBrandCard(b)).join('');
+  }
+}
+
+function renderBrandDetail(brandId){
+  const b=brands.find(x=>x.id===brandId);
+  if(!b) return;
+  document.getElementById('brand-detail-name').textContent=b.name;
+  document.getElementById('brand-detail-sub').textContent=(b.manager?b.manager+' 담당 · ':'')+contents.filter(c=>c.brandId===brandId).length+'개 콘텐츠';
+  const bc=contents.filter(c=>c.brandId===brandId);
+  const grid=document.getElementById('brand-content-grid');
+  if(!bc.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-upload"></i><p>아직 업로드된 콘텐츠가 없습니다</p><button class="btn btn-primary btn-sm" onclick="openUploadModal()"><i class="ti ti-plus"></i> 첫 콘텐츠 업로드</button></div>`;
+    return;
+  }
+  grid.innerHTML=bc.map(c=>{
+    const [stCls,stLabel]=statusLabel(c.status);
+    const ch=getChannel(c.channel);
+    return `<div class="content-card" onclick="openContent('${c.id}','brand-detail')">
+      <div class="cc-thumb">
+        ${renderThumb(c)}
+        <span class="cc-channel-tag" style="background:${ch?.bg||'#eee'};color:${ch?.color||'#333'}"><i class="ti ${ch?.icon||'ti-file'}" style="font-size:10px;vertical-align:-1px" aria-hidden="true"></i> ${ch?.name||c.channel}</span>
+        <span class="cc-status-tag ${stCls}">${stLabel}</span>
+      </div>
+      <div class="cc-body">
+        <div class="cc-title">${c.title}</div>
+        <div class="cc-meta">${c.caption.slice(0,40)}${c.caption.length>40?'…':''}</div>
+        <div class="cc-date"><i class="ti ti-calendar" style="font-size:11px" aria-hidden="true"></i> ${c.date}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAll(){
+  const bf=document.getElementById('filter-brand').value;
+  const sf=document.getElementById('filter-status').value;
+  let list=contents;
+  if(bf) list=list.filter(c=>c.brandId===bf);
+  if(sf) list=list.filter(c=>c.status===sf);
+  const tbody=document.getElementById('all-tbody');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--color-text-tertiary)">해당하는 콘텐츠가 없습니다.</td></tr>';return;}
+  tbody.innerHTML=list.map(c=>{
+    const b=brands.find(x=>x.id===c.brandId);
+    const [stCls,stLabel]=statusLabel(c.status);
+    const ch=getChannel(c.channel);
+    return `<tr style="cursor:pointer" onclick="openContent('${c.id}','all')">
+      <td><span style="background:${COLOR_BG[b?.colorIdx||0]};color:${COLORS[b?.colorIdx||0]};font-size:11px;padding:2px 8px;border-radius:99px">${b?.name||'-'}</span></td>
+      <td style="font-weight:500">${c.title}</td>
+      <td><span class="channel-pill" style="background:${ch?.bg||'#eee'};color:${ch?.color||'#333'}"><i class="ti ${ch?.icon||'ti-file'}" style="font-size:11px;vertical-align:-1px" aria-hidden="true"></i> ${ch?.name||c.channel}</span></td>
+      <td style="color:var(--color-text-secondary)">${c.date}</td>
+      <td><span class="pill ${stCls}">${stLabel}</span></td>
+      <td><button class="btn btn-sm" onclick="event.stopPropagation();openContent('${c.id}','all')"><i class="ti ti-eye"></i> 보기</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openContent(contentId,fromPage){
+  currentContentId=contentId;
+  contentBackPage=fromPage;
+  previewIndex=0;
+  const c=contents.find(x=>x.id===contentId);
+  if(!c) return;
+  const b=brands.find(x=>x.id===c.brandId);
+  const ch=getChannel(c.channel);
+
+  document.getElementById('content-detail-title').textContent=c.title;
+  document.getElementById('content-detail-brand').textContent=(b?.name||'')+' · '+(ch?.name||c.channel);
+  document.getElementById('content-caption').textContent=c.caption||'(캡션 없음)';
+  document.getElementById('content-channel').textContent=ch?.name||c.channel;
+  document.getElementById('content-date').textContent=c.date;
+  const fileCount=c.files?c.files.length:0;
+  document.getElementById('content-file-count').textContent=fileCount?fileCount+'개':'없음';
+
+  renderContentPreview(c);
+
+  const [stCls,stLabel]=statusLabel(c.status);
+  document.getElementById('content-status-area').innerHTML=`<span class="pill ${stCls}" style="font-size:13px;padding:5px 12px">${stLabel}</span>`;
+
+  renderComments(c);
+  renderActionBar(c);
+
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-content-detail').classList.add('active');
+}
+
+function renderContentPreview(c){
+  const preview=document.getElementById('content-preview');
+  const thumbsEl=document.getElementById('content-thumbs');
+  if(!c.files||!c.files.length){
+    preview.innerHTML=`<div class="placeholder-content"><i class="ti ti-photo" aria-hidden="true"></i><span class="detail-preview-label">${c.title}</span></div>`;
+    thumbsEl.innerHTML='';
+    return;
+  }
+  const file=c.files[previewIndex];
+  const isVid=file.type&&file.type.startsWith('video/');
+  const media=isVid?`<video src="${file.dataUrl}" controls></video>`:`<img src="${file.dataUrl}" alt="${c.title}">`;
+  const counter=c.files.length>1?`<div class="detail-main-preview-counter">${previewIndex+1} / ${c.files.length}</div>`:'';
+  const navBtns=c.files.length>1?`
+    <button class="detail-main-preview-nav prev" onclick="navPreview(-1)" aria-label="이전"><i class="ti ti-chevron-left"></i></button>
+    <button class="detail-main-preview-nav next" onclick="navPreview(1)" aria-label="다음"><i class="ti ti-chevron-right"></i></button>
+  `:'';
+  preview.innerHTML=media+counter+navBtns;
+
+  if(c.files.length>1){
+    thumbsEl.innerHTML='<div class="detail-thumbs">'+c.files.map((f,i)=>{
+      const iv=f.type&&f.type.startsWith('video/');
+      const m=iv?`<video src="${f.dataUrl}" muted></video><i class="ti ti-player-play detail-thumb-vid-icon"></i>`:`<img src="${f.dataUrl}">`;
+      return `<div class="detail-thumb ${i===previewIndex?'active':''}" onclick="setPreviewIndex(${i})">${m}</div>`;
+    }).join('')+'</div>';
+  } else {
+    thumbsEl.innerHTML='';
+  }
+}
+
+function setPreviewIndex(i){
+  const c=contents.find(x=>x.id===currentContentId);
+  if(!c||!c.files) return;
+  previewIndex=Math.max(0,Math.min(i,c.files.length-1));
+  renderContentPreview(c);
+}
+
+function navPreview(d){
+  const c=contents.find(x=>x.id===currentContentId);
+  if(!c||!c.files) return;
+  previewIndex=(previewIndex+d+c.files.length)%c.files.length;
+  renderContentPreview(c);
+}
+
+function renderComments(c){
+  const cl=document.getElementById('comment-list');
+  if(!c.comments||!c.comments.length){cl.innerHTML='<div style="font-size:12px;color:var(--color-text-tertiary);padding:8px 0">아직 코멘트가 없습니다.</div>';return;}
+  cl.innerHTML=c.comments.map(cm=>`
+    <div class="comment-item">
+      <div class="comment-author">${cm.author}</div>
+      <div class="comment-txt">${cm.text}</div>
+      <div class="comment-time">${cm.time}</div>
+    </div>`).join('');
+  cl.scrollTop=cl.scrollHeight;
+}
+
+function renderActionBar(c){
+  const ab=document.getElementById('action-bar');
+  if(c.status==='review'){
+    ab.innerHTML=`
+      <button class="btn btn-success" style="flex:1" onclick="setStatus('${c.id}','approved')"><i class="ti ti-check"></i> 승인</button>
+      <button class="btn btn-danger" style="flex:1" onclick="setStatus('${c.id}','rejected')"><i class="ti ti-x"></i> 반려</button>`;
+  } else if(c.status==='rejected'){
+    ab.innerHTML=`<button class="btn" style="flex:1" onclick="setStatus('${c.id}','review')"><i class="ti ti-refresh"></i> 재검토 요청</button>`;
+  } else if(c.status==='approved'){
+    ab.innerHTML=`<div style="font-size:12px;color:var(--color-text-success);display:flex;align-items:center;gap:6px"><i class="ti ti-circle-check"></i> 승인된 콘텐츠입니다.</div>`;
+  } else {
+    ab.innerHTML=`<button class="btn btn-primary" style="flex:1" onclick="setStatus('${c.id}','review')"><i class="ti ti-send"></i> 컨펌 요청</button>`;
+  }
+}
+
+function setStatus(contentId,status){
+  const c=contents.find(x=>x.id===contentId);
+  if(!c) return;
+  c.status=status;
+  const now=new Date();
+  const timeStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'+now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(status==='approved') c.comments.push({author:'결정권자',text:'승인되었습니다.',time:timeStr});
+  if(status==='rejected') c.comments.push({author:'결정권자',text:'반려되었습니다. 수정 후 재업로드 요청드립니다.',time:timeStr});
+  openContent(contentId,contentBackPage);
+  renderSidebar();
+}
+
+function quickApprove(contentId){setStatus(contentId,'approved');renderDashboard();}
+
+function addComment(){
+  const inp=document.getElementById('comment-input');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const c=contents.find(x=>x.id===currentContentId);
+  if(!c) return;
+  const now=new Date();
+  const timeStr=(now.getMonth()+1).toString().padStart(2,'0')+'/'+now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  c.comments.push({author:'나',text:txt,time:timeStr});
+  inp.value='';
+  renderComments(c);
+}
+
+function backFromContent(){goPage(contentBackPage,currentBrandId);}
+
+function renderColorPicker(){
+  document.getElementById('color-picker').innerHTML=COLORS.map((c,i)=>
+    `<div class="bcp ${i===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor(${i})"></div>`
+  ).join('');
+}
+function selectColor(i){selectedColor=i;renderColorPicker();}
+
+function renderChannelChecks(){
+  document.getElementById('channel-checks').innerHTML=CHANNELS.map(ch=>`
+    <div class="ch-check ${selectedChannels.includes(ch.id)?'selected':''}" onclick="toggleChannel('${ch.id}')">
+      <i class="ti ${ch.icon}" aria-hidden="true"></i> ${ch.name}
+    </div>`).join('');
+}
+function toggleChannel(id){
+  const i=selectedChannels.indexOf(id);
+  if(i>=0) selectedChannels.splice(i,1); else selectedChannels.push(id);
+  renderChannelChecks();
+}
+
+function openBrandModal(){
+  selectedColor=0;
+  selectedChannels=[];
+  document.getElementById('new-brand-name').value='';
+  document.getElementById('new-brand-manager').value='';
+  renderColorPicker();
+  renderChannelChecks();
+  document.getElementById('modal-brand').classList.add('open');
+}
+function closeBrandModal(){document.getElementById('modal-brand').classList.remove('open');}
+
+function createBrand(){
+  const name=document.getElementById('new-brand-name').value.trim();
+  const manager=document.getElementById('new-brand-manager').value.trim();
+  if(!name){alert('브랜드명을 입력해주세요.');return;}
+  if(!manager){alert('담당자명을 입력해주세요.');return;}
+  brands.push({id:uid(),name,manager,channels:[...selectedChannels],colorIdx:selectedColor,createdAt:new Date().toISOString().split('T')[0]});
+  closeBrandModal();
+  renderSidebar();
+  renderBrandsPage();
+  renderDashboard();
+}
+
+function openDeleteModal(brandId){
+  pendingDeleteBrandId=brandId;
+  const b=brands.find(x=>x.id===brandId);
+  const cnt=contents.filter(c=>c.brandId===brandId).length;
+  document.getElementById('del-brand-name').textContent=b?.name||'';
+  document.getElementById('del-content-count').textContent=cnt;
+  document.getElementById('modal-delete').classList.add('open');
+}
+function closeDeleteModal(){pendingDeleteBrandId=null;document.getElementById('modal-delete').classList.remove('open');}
+
+function confirmDeleteBrand(){
+  if(!pendingDeleteBrandId) return;
+  brands=brands.filter(b=>b.id!==pendingDeleteBrandId);
+  contents=contents.filter(c=>c.brandId!==pendingDeleteBrandId);
+  if(currentBrandId===pendingDeleteBrandId) currentBrandId=null;
+  closeDeleteModal();
+  renderSidebar();
+  renderBrandsPage();
+  renderDashboard();
+  goPage('brands');
+}
+
+function handleFileInput(e){
+  const files=Array.from(e.target.files||[]);
+  if(files.length) processFiles(files);
+  e.target.value='';
+}
+
+function processFiles(files){
+  const validFiles=[];
+  let skipped=[];
+  for(const file of files){
+    const isImg=file.type.startsWith('image/');
+    const isVid=file.type.startsWith('video/');
+    if(!isImg&&!isVid){skipped.push(file.name+' (지원하지 않는 형식)');continue;}
+    validFiles.push(file);
+  }
+  if(!validFiles.length){
+    if(skipped.length) alert('업로드 불가:\n'+skipped.join('\n'));
+    return;
+  }
+
+  let runningTotal=totalUploadedSize();
+  const accepted=[];
+  const rejected=[];
+  for(const file of validFiles){
+    if(runningTotal+file.size>MAX_TOTAL_SIZE){
+      rejected.push(file.name);
+    } else {
+      accepted.push(file);
+      runningTotal+=file.size;
+    }
+  }
+
+  if(rejected.length){
+    alert('총 용량 1GB 한도를 초과하여 일부 파일이 제외되었습니다:\n'+rejected.join('\n'));
+  }
+
+  let pending=accepted.length;
+  if(!pending){renderFileList();return;}
+
+  accepted.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      uploadedFiles.push({id:uid(),name:file.name,size:file.size,type:file.type,dataUrl:ev.target.result});
+      pending--;
+      if(pending===0){
+        renderFileList();
+        if(!document.getElementById('up-title').value.trim()&&uploadedFiles.length){
+          const firstName=uploadedFiles[0].name.replace(/\.[^/.]+$/,'');
+          document.getElementById('up-title').value=uploadedFiles.length>1?`${firstName} 외 ${uploadedFiles.length-1}건`:firstName;
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderFileList(){
+  const summary=document.getElementById('file-summary');
+  const list=document.getElementById('file-list-area');
+  const dz=document.getElementById('dropzone');
+  if(!uploadedFiles.length){
+    summary.style.display='none';
+    list.innerHTML='';
+    dz.style.display='block';
+    return;
+  }
+  dz.style.display='none';
+  const total=totalUploadedSize();
+  const pct=(total/MAX_TOTAL_SIZE)*100;
+  const fillCls=pct>=90?'danger':pct>=70?'warn':'';
+  summary.style.display='block';
+  summary.innerHTML=`
+    <div class="upload-summary">
+      <div><i class="ti ti-files" style="font-size:13px;vertical-align:-1px" aria-hidden="true"></i> ${uploadedFiles.length}개 파일</div>
+      <div><span style="font-weight:500;color:#1a1a1a">${formatFileSize(total)}</span> / 1 GB</div>
+    </div>
+    <div class="upload-summary-bar"><div class="upload-summary-fill ${fillCls}" style="width:${Math.min(100,pct)}%"></div></div>
+  `;
+
+  list.innerHTML='<div class="file-list">'+uploadedFiles.map(f=>{
+    const isVid=f.type.startsWith('video/');
+    const media=isVid?`<video src="${f.dataUrl}" muted></video>`:`<img src="${f.dataUrl}" alt="">`;
+    const typeBadge=isVid?`<span class="file-item-type"><i class="ti ti-video" style="font-size:9px"></i> 영상</span>`:`<span class="file-item-type"><i class="ti ti-photo" style="font-size:9px"></i> 이미지</span>`;
+    return `<div class="file-item">
+      ${media}
+      ${typeBadge}
+      <button class="file-item-remove" onclick="removeFile('${f.id}')" title="제거"><i class="ti ti-x"></i></button>
+      <div class="file-item-info">
+        <span class="file-item-name">${f.name}</span>
+      </div>
+    </div>`;
+  }).join('')+`<div class="add-more-tile" onclick="document.getElementById('up-file-input').click()">
+    <i class="ti ti-plus"></i> 파일 추가
+  </div></div>`;
+}
+
+function removeFile(fileId){
+  uploadedFiles=uploadedFiles.filter(f=>f.id!==fileId);
+  renderFileList();
+}
+
+function setupDropzone(){
+  const dz=document.getElementById('dropzone');
+  const modal=document.getElementById('modal-upload');
+  ['dragenter','dragover'].forEach(ev=>{
+    dz.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();dz.classList.add('dragover');});
+    modal.addEventListener(ev,e=>{e.preventDefault();});
+  });
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();dz.classList.remove('dragover');}));
+  dz.addEventListener('drop',e=>{
+    const files=Array.from(e.dataTransfer.files||[]);
+    if(files.length) processFiles(files);
+  });
+  modal.addEventListener('drop',e=>{e.preventDefault();});
+}
+
+function openUploadModal(){
+  if(!currentBrandId){alert('브랜드를 먼저 선택해주세요.');return;}
+  const b=brands.find(x=>x.id===currentBrandId);
+  const chSel=document.getElementById('up-channel');
+  const availableChannels=(b.channels&&b.channels.length)?CHANNELS.filter(ch=>b.channels.includes(ch.id)):CHANNELS;
+  chSel.innerHTML=availableChannels.map(ch=>`<option value="${ch.id}">${ch.name}</option>`).join('');
+  document.getElementById('up-title').value='';
+  document.getElementById('up-caption').value='';
+  document.getElementById('up-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('up-file-input').value='';
+  uploadedFiles=[];
+  renderFileList();
+  document.getElementById('modal-upload').classList.add('open');
+}
+function closeUploadModal(){document.getElementById('modal-upload').classList.remove('open');}
+
+function uploadContent(){
+  const title=document.getElementById('up-title').value.trim();
+  if(!title){alert('제목을 입력해주세요.');return;}
+  if(!currentBrandId){alert('브랜드를 먼저 선택해주세요.');return;}
+  const hasVid=uploadedFiles.some(f=>f.type.startsWith('video/'));
+  const inferredType=hasVid?'video':'image';
+  contents.unshift({
+    id:uid(),brandId:currentBrandId,title,
+    channel:document.getElementById('up-channel').value,
+    date:document.getElementById('up-date').value,
+    caption:document.getElementById('up-caption').value,
+    type:inferredType,
+    status:document.getElementById('up-status').value,
+    files:[...uploadedFiles],
+    comments:[],
+    createdAt:new Date().toISOString().split('T')[0]
+  });
+  closeUploadModal();
+  renderBrandDetail(currentBrandId);
+  renderSidebar();
+}
+
+renderSidebar();
+renderDashboard();
+setupDropzone();
+</script>
